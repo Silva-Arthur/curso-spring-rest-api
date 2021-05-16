@@ -6,17 +6,23 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import curso.api.rest.model.Telefone;
 import curso.api.rest.model.Usuario;
 import curso.api.rest.repository.UsuarioRepository;
 
+/*Habilita  acessos*/
+@CrossOrigin(origins = "http://localhost:8080")
 /*Mapeando como um controller REST*/
 @RestController
 /*mapeando minha classe com a URI*/
@@ -72,6 +78,9 @@ public class IndexController {
 	@PostMapping(value = "/", produces = "application/json")
 	public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario) {
 		
+		for (Telefone telefone : usuario.getTelefones()) {
+			telefone.setUsuario(usuario);
+		}
 		Usuario usuarioSalvo = usuarioRepository.save(usuario);
 		
 		return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
@@ -88,4 +97,27 @@ public class IndexController {
 		return new ResponseEntity(
 				"idUser: " + idUser  + " idVenda: " + idVenda, HttpStatus.OK);
 	}
+	
+	/*Atualiza no banco de dados e retorna o objeto que foi salvo no banco*/
+	@PutMapping(value = "/", produces = "application/json")
+	public ResponseEntity<Usuario> atualizar(@RequestBody Usuario usuario) {
+		
+		/*Outras rotinas antes de atualizar*/
+		for (Telefone telefone : usuario.getTelefones()) {
+			telefone.setUsuario(usuario);
+		}
+		Usuario usuarioSalvo = usuarioRepository.save(usuario);
+		
+		return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@DeleteMapping(value = "/{id}", produces = "application/text")
+	public ResponseEntity deletar(@PathVariable(value = "id") Long id){
+		
+		usuarioRepository.deleteById(id);
+		
+		return new ResponseEntity("apagou!", HttpStatus.OK);
+	}
+	
 }
