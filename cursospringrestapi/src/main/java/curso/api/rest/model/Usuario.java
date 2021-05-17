@@ -1,18 +1,30 @@
 package curso.api.rest.model;
 
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.ConstraintMode;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.OneToMany;
+import javax.persistence.UniqueConstraint;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
-public class Usuario implements Serializable{
+public class Usuario implements UserDetails{
 
 	private static final long serialVersionUID = 1L;
 
@@ -20,14 +32,28 @@ public class Usuario implements Serializable{
 	@GeneratedValue(strategy =  GenerationType.IDENTITY)
 	private Long id;
 	
+	@Column(unique = true)
 	private String login;
+	
 	private String senha;
 	private String nome;
 	
 	/*orphanRemoval = vai excluir os telefones quando excluir o usuario*/
 	/*cascade = all, vai excluir todos os telefones ou vai trazer todos os telefones num find, por exemplo*/
-	@OneToMany(mappedBy = "usuario", orphanRemoval = true, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "usuario", orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	private List<Telefone> telefones = new ArrayList<Telefone>();
+	
+	/*Os papeis ou acessos*/
+	@OneToMany(fetch = FetchType.EAGER)
+	@JoinTable(name = "usuarios_role", uniqueConstraints = @UniqueConstraint(
+			columnNames = {"usuario_id", "role_id"}, name = "unique_role_user"),
+	
+	joinColumns = @JoinColumn(name = "usuario_id", referencedColumnName = "id", table = "usuario", unique = false,
+	foreignKey = @ForeignKey(name = "usuario_fk", value = ConstraintMode.CONSTRAINT)),
+	
+	inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id", table = "role", unique = false, updatable = false),
+	foreignKey = @ForeignKey(name = "role_fk", value = ConstraintMode.CONSTRAINT))
+	private List<Role> roles; 
 	
 	public List<Telefone> getTelefones() {
 		return telefones;
@@ -85,6 +111,36 @@ public class Usuario implements Serializable{
 	@Override
 	public String toString() {
 		return "Usuario [id=" + id + ", login=" + login + ", senha=" + senha + ", nome=" + nome + "]";
+	}
+	
+	/*São os acessos do usuario ROLE_ADMIN, ROLE_VISITANTE*/
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return roles;
+	}
+	@Override
+	public String getPassword() {
+		return this.senha;
+	}
+	@Override
+	public String getUsername() {
+		return this.login;
+	}
+	@Override
+	public boolean isAccountNonExpired() {
+		return true;
+	}
+	@Override
+	public boolean isAccountNonLocked() {
+		return true;
+	}
+	@Override
+	public boolean isCredentialsNonExpired() {
+		return true;
+	}
+	@Override
+	public boolean isEnabled() {
+		return true;
 	}
 	
 }

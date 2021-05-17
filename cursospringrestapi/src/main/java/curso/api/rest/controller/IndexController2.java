@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,12 +21,13 @@ import curso.api.rest.model.Telefone;
 import curso.api.rest.model.Usuario;
 import curso.api.rest.repository.UsuarioRepository;
 
-
+/*Habilita  acessos*/
+@CrossOrigin(origins = "localhost:8080")
 /*Mapeando como um controller REST*/
 @RestController
 /*mapeando minha classe com a URI*/
-@RequestMapping(value = "/usuario")
-public class IndexController {
+@RequestMapping(value = "/usuario2")
+public class IndexController2 {
 	
 	@Autowired
 	private UsuarioRepository usuarioRepository;
@@ -80,9 +81,6 @@ public class IndexController {
 		for (Telefone telefone : usuario.getTelefones()) {
 			telefone.setUsuario(usuario);
 		}
-		
-		String senhaCriptografada = new BCryptPasswordEncoder().encode(usuario.getSenha());
-		usuario.setSenha(senhaCriptografada);
 		Usuario usuarioSalvo = usuarioRepository.save(usuario);
 		
 		return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
@@ -108,13 +106,6 @@ public class IndexController {
 		for (Telefone telefone : usuario.getTelefones()) {
 			telefone.setUsuario(usuario);
 		}
-		Usuario userTemporario = usuarioRepository.findUserByLogin(usuario.getLogin());
-		
-		if (!userTemporario.getSenha().equals(usuario.getSenha())) {
-			String senhaCriptografada = new BCryptPasswordEncoder().encode(usuario.getSenha());
-			usuario.setSenha(senhaCriptografada);
-		}
-		
 		Usuario usuarioSalvo = usuarioRepository.save(usuario);
 		
 		return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
