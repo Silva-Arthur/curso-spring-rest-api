@@ -55,12 +55,24 @@ public class IndexController {
 	}
 
 	/* 'value = /' quer dizer que estamos mapeando direto na raiz*/
-	@GetMapping(value = "/{id}", produces = "application/json")
-	public ResponseEntity<Usuario> init(
+	@GetMapping(value = "/{id}", produces = "application/json", headers = "X-API-Version=v1")
+	public ResponseEntity<Usuario> initV1(
 			@PathVariable(value = "id") Long id,
 			@RequestParam(value = "nome", defaultValue = "Nome não informado", required = false) String nome,
 			@RequestParam(value = "salario", required = false) Long salario){
+		System.out.println("Versão 01");
+		Optional<Usuario> usuario = usuarioRepository.findById(id);
 		
+		return new ResponseEntity<Usuario>(usuario.get(), HttpStatus.OK);
+	}
+	
+	/* 'value = /' quer dizer que estamos mapeando direto na raiz*/
+	@GetMapping(value = "/{id}", produces = "application/json", headers = "X-API-Version=v2" )
+	public ResponseEntity<Usuario> initV2(
+			@PathVariable(value = "id") Long id,
+			@RequestParam(value = "nome", defaultValue = "Nome não informado", required = false) String nome,
+			@RequestParam(value = "salario", required = false) Long salario){
+		System.out.println("Versão 02");
 		Optional<Usuario> usuario = usuarioRepository.findById(id);
 		
 		return new ResponseEntity<Usuario>(usuario.get(), HttpStatus.OK);
