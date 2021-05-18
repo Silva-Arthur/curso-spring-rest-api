@@ -51,21 +51,27 @@ public class JWTTokenAutenticacaoService {
 		/*Adiciona no cabeçalho http*/
 		response.addHeader(HEADER_STRING, token); /*Exemplo: Authorization: Bearer dsajdsiodjsiaodjsi*/
 		
+		/*Liberando resposta para portas diferentes qeu usam a API ou caso
+		 * clientes web*/
+		liberacaoCors(response);
+		
 		/*Escreve o token como resposta no corpo do http também em forma de JSON*/
 		response.getWriter().write("{\"Authorization\": \""+token+"\"}");
 	}
 	
 	/*Retorna o usuário validado com token ou caso não seja válido retorna null*/
-	public Authentication getAuthentication(HttpServletRequest request) {
+	public Authentication getAuthentication(HttpServletRequest request, HttpServletResponse response) {
 		
 		/*Pega o token enviado no cabeçalho http*/
 		String token = request.getHeader(HEADER_STRING);
 		
 		if (token != null) {
+			
+			String tokenLimpo = token.replace(TOKEN_PREFIX, "").trim();
 			/*Faz a validação do token do usuário na requisição*/
 			String user = Jwts.parser()
 					.setSigningKey(SECRET) /*Bearer dsajdsiodjsiaodjsi*/
-					.parseClaimsJws(token.replace(TOKEN_PREFIX, "")) /*dsajdsiodjsiaodjsi*/
+					.parseClaimsJws(tokenLimpo) /*dsajdsiodjsiaodjsi*/
 					.getBody().getSubject(); /*tira tudo e Pega o usuario, exemplo: Arthur*/
 			
 			if (user != null) {
@@ -73,15 +79,41 @@ public class JWTTokenAutenticacaoService {
 						.getBean(UsuarioRepository.class).findUserByLogin(user);
 				
 				if (usuario != null) {
-					/*Retorna o usuário logado*/
-					return new UsernamePasswordAuthenticationToken(
-							usuario.getLogin(), 
-							usuario.getSenha(), 
-							usuario.getAuthorities());
+					if (tokenLimpo.equals(usuario.getToken())) {
+						/*Retorna o usuário logado*/
+						return new UsernamePasswordAuthenticationToken(
+								usuario.getLogin(), 
+								usuario.getSenha(), 
+								usuario.getAuthorities());						
+					}
 				}
 			} 
 		} 
+		
+		liberacaoCors(response);
+		
 		return null; /*Não autorizado*/
+	}
+
+	/*Liberando resposta para portas diferentes qeu usam a API ou caso
+	 * clientes web*/
+	private void liberacaoCors(HttpServletResponse response) {
+		if (response.getHeader("Access-Control-Allow-Origin") == null) {
+			response.addHeader("Access-Control-Allow-Origin", "*");
+		}
+		
+		if (response.getHeader("Access-Control-Allow-Headers") == null) {
+			response.addHeader("Access-Control-Allow-Headers", "*");
+		}
+		
+		if (response.getHeader("Access-Control-Request-Headers") == null) {
+			response.addHeader("Access-Control-Request-Headers", "*");
+		}
+		
+		if (response.getHeader("Access-Control-Allow-Methods") == null) {
+			response.addHeader("Access-Control-Allow-Methods", "*");
+		}
+		
 	}
 	
 }

@@ -37,6 +37,7 @@ public class Usuario implements UserDetails{
 	
 	private String senha;
 	private String nome;
+	private String token;
 	
 	/*orphanRemoval = vai excluir os telefones quando excluir o usuario*/
 	/*cascade = all, vai excluir todos os telefones ou vai trazer todos os telefones num find, por exemplo*/
@@ -110,7 +111,8 @@ public class Usuario implements UserDetails{
 	}
 	@Override
 	public String toString() {
-		return "Usuario [id=" + id + ", login=" + login + ", senha=" + senha + ", nome=" + nome + "]";
+		return "Usuario [id=" + id + ", login=" + login + ", senha=" + senha + ", nome=" + nome + 
+			   ", token=" + token + "]";
 	}
 	
 	/*São os acessos do usuario ROLE_ADMIN, ROLE_VISITANTE*/
@@ -141,6 +143,12 @@ public class Usuario implements UserDetails{
 	@Override
 	public boolean isEnabled() {
 		return true;
+	}
+	public String getToken() {
+		return token;
+	}
+	public void setToken(String token) {
+		this.token = token;
 	}
 	
 }
