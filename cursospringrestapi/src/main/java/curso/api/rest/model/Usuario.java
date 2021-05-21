@@ -21,8 +21,6 @@ import javax.persistence.UniqueConstraint;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 @Entity
 public class Usuario implements UserDetails{
 
@@ -38,6 +36,13 @@ public class Usuario implements UserDetails{
 	private String senha;
 	private String nome;
 	private String token;
+	private String cpf;
+	private String cep;
+	private String logradouro;
+	private String bairro;
+	private String localidade;
+	private String complemento;
+	private String uf;
 	
 	/*orphanRemoval = vai excluir os telefones quando excluir o usuario*/
 	/*cascade = all, vai excluir todos os telefones ou vai trazer todos os telefones num find, por exemplo*/
@@ -56,6 +61,42 @@ public class Usuario implements UserDetails{
 	foreignKey = @ForeignKey(name = "role_fk", value = ConstraintMode.CONSTRAINT))
 	private List<Role> roles; 
 	
+	public String getCep() {
+		return cep;
+	}
+	public void setCep(String cep) {
+		this.cep = cep;
+	}
+	public String getLogradouro() {
+		return logradouro;
+	}
+	public void setLogradouro(String logradouro) {
+		this.logradouro = logradouro;
+	}
+	public String getBairro() {
+		return bairro;
+	}
+	public void setBairro(String bairro) {
+		this.bairro = bairro;
+	}
+	public String getLocalidade() {
+		return localidade;
+	}
+	public void setLocalidade(String localidade) {
+		this.localidade = localidade;
+	}
+	public String getUf() {
+		return uf;
+	}
+	public void setUf(String uf) {
+		this.uf = uf;
+	}
+	public List<Role> getRoles() {
+		return roles;
+	}
+	public void setRoles(List<Role> roles) {
+		this.roles = roles;
+	}
 	public List<Telefone> getTelefones() {
 		return telefones;
 	}
@@ -111,8 +152,9 @@ public class Usuario implements UserDetails{
 	}
 	@Override
 	public String toString() {
-		return "Usuario [id=" + id + ", login=" + login + ", senha=" + senha + ", nome=" + nome + 
-			   ", token=" + token + "]";
+		return "Usuario [id=" + id + ", login=" + login + ", senha=" + senha + ", nome=" + nome + ", token=" + token
+				+ ", cpf=" + cpf + ", cep=" + cep + ", logradouro=" + logradouro + ", bairro=" + bairro
+				+ ", localidade=" + localidade + ", uf=" + uf + ", telefones=" + telefones + ", roles=" + roles + "]";
 	}
 	
 	/*São os acessos do usuario ROLE_ADMIN, ROLE_VISITANTE*/
@@ -149,6 +191,18 @@ public class Usuario implements UserDetails{
 	}
 	public void setToken(String token) {
 		this.token = token;
+	}
+	public String getCpf() {
+		return cpf;
+	}
+	public void setCpf(String cpf) {
+		this.cpf = cpf;
+	}
+	public String getComplemento() {
+		return complemento;
+	}
+	public void setComplemento(String complemento) {
+		this.complemento = complemento;
 	}
 	
 }

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import curso.api.rest.ApplicationContextLoad;
 import curso.api.rest.model.Usuario;
 import curso.api.rest.repository.UsuarioRepository;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
@@ -51,6 +52,9 @@ public class JWTTokenAutenticacaoService {
 		/*Adiciona no cabeçalho http*/
 		response.addHeader(HEADER_STRING, token); /*Exemplo: Authorization: Bearer dsajdsiodjsiaodjsi*/
 		
+		ApplicationContextLoad.getApplicationContext()
+		.getBean(UsuarioRepository.class).atualizaTokenUser(JWT, username);
+		
 		/*Liberando resposta para portas diferentes qeu usam a API ou caso
 		 * clientes web*/
 		liberacaoCors(response);
@@ -65,30 +69,39 @@ public class JWTTokenAutenticacaoService {
 		/*Pega o token enviado no cabeçalho http*/
 		String token = request.getHeader(HEADER_STRING);
 		
-		if (token != null) {
-			
-			String tokenLimpo = token.replace(TOKEN_PREFIX, "").trim();
-			/*Faz a validação do token do usuário na requisição*/
-			String user = Jwts.parser()
-					.setSigningKey(SECRET) /*Bearer dsajdsiodjsiaodjsi*/
-					.parseClaimsJws(tokenLimpo) /*dsajdsiodjsiaodjsi*/
-					.getBody().getSubject(); /*tira tudo e Pega o usuario, exemplo: Arthur*/
-			
-			if (user != null) {
-				Usuario usuario = ApplicationContextLoad.getApplicationContext()
-						.getBean(UsuarioRepository.class).findUserByLogin(user);
+		try {
+			if (token != null) {
 				
-				if (usuario != null) {
-					if (tokenLimpo.equals(usuario.getToken())) {
-						/*Retorna o usuário logado*/
-						return new UsernamePasswordAuthenticationToken(
-								usuario.getLogin(), 
-								usuario.getSenha(), 
-								usuario.getAuthorities());						
+				String tokenLimpo = token.replace(TOKEN_PREFIX, "").trim();
+				/*Faz a validação do token do usuário na requisição*/
+				String user = Jwts.parser()
+						.setSigningKey(SECRET) /*Bearer dsajdsiodjsiaodjsi*/
+						.parseClaimsJws(tokenLimpo) /*dsajdsiodjsiaodjsi*/
+						.getBody().getSubject(); /*tira tudo e Pega o usuario, exemplo: Arthur*/
+				
+				if (user != null) {
+					Usuario usuario = ApplicationContextLoad.getApplicationContext()
+							.getBean(UsuarioRepository.class).findUserByLogin(user);
+					
+					if (usuario != null) {
+						if (tokenLimpo.equals(usuario.getToken())) {
+							/*Retorna o usuário logado*/
+							return new UsernamePasswordAuthenticationToken(
+									usuario.getLogin(), 
+									usuario.getSenha(), 
+									usuario.getAuthorities());						
+						}
 					}
-				}
-			} 
-		} 
+				} 
+			}
+		} catch (ExpiredJwtException e) {
+			e.printStackTrace();
+			try {
+				response.getOutputStream().println("Seu TOKEN está expirado, faça o login ou informe um novo TOKEN PARA AUTENTICAÇÃO");
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		}
 		
 		liberacaoCors(response);
 		
