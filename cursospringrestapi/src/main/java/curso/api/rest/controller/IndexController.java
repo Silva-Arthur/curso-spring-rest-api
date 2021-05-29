@@ -3,7 +3,6 @@ package curso.api.rest.controller;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
@@ -66,7 +65,7 @@ public class IndexController {
 	}
 
 	/* 'value = /' quer dizer que estamos mapeando direto na raiz*/
-	@GetMapping(value = "/{id}", produces = "application/json", headers = "X-API-Version=v1")
+	@GetMapping(value = "/{id}", produces = "application/json")
 	public ResponseEntity<Usuario> initV1(
 			@PathVariable(value = "id") Long id,
 			@RequestParam(value = "nome", defaultValue = "Nome não informado", required = false) String nome,
@@ -78,7 +77,7 @@ public class IndexController {
 	}
 	
 	/* 'value = /' quer dizer que estamos mapeando direto na raiz*/
-	@GetMapping(value = "/{id}", produces = "application/json", headers = "X-API-Version=v2" )
+	@GetMapping(value = "/{id}", produces = "application/json", headers = "X-API-Version=v2")
 	public ResponseEntity<UsuarioDTO> initV2(
 			@PathVariable(value = "id") Long id,
 			@RequestParam(value = "nome", defaultValue = "Nome não informado", required = false) String nome,
@@ -108,28 +107,30 @@ public class IndexController {
 		}
 		
 		/*Consumindo API pública externa - INICIO*/
-		URL url = new URL("https://viacep.com.br/ws/"+usuario.getCep()+"/json/");
-		URLConnection connection = url.openConnection();
-		InputStream is = connection.getInputStream();
-		BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-		
-		String cep = "";
-		StringBuilder jsonCep = new StringBuilder();
-		while ((cep = br.readLine()) != null) {
-			jsonCep.append(cep);
+		if (usuario.getCep() != null && !usuario.getCep().isEmpty()) {
+			URL url = new URL("https://viacep.com.br/ws/"+usuario.getCep()+"/json/");
+			URLConnection connection = url.openConnection();
+			InputStream is = connection.getInputStream();
+			BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+			
+			String cep = "";
+			StringBuilder jsonCep = new StringBuilder();
+			while ((cep = br.readLine()) != null) {
+				jsonCep.append(cep);
+			}
+			
+			System.out.println(jsonCep.toString());
+			
+			/*converte o texto em um json e do json para o objeto usuario*/
+			Usuario userAux = new Gson().fromJson(jsonCep.toString(), Usuario.class);
+			
+			usuario.setCep(userAux.getCep());
+			usuario.setLogradouro(userAux.getLogradouro());
+			usuario.setComplemento(userAux.getComplemento());
+			usuario.setBairro(userAux.getBairro());
+			usuario.setLocalidade(userAux.getLocalidade());
+			usuario.setUf(userAux.getUf());
 		}
-		
-		System.out.println(jsonCep.toString());
-		
-		/*converte o texto em um json e do json para o objeto usuario*/
-		Usuario userAux = new Gson().fromJson(jsonCep.toString(), Usuario.class);
-		
-		usuario.setCep(userAux.getCep());
-		usuario.setLogradouro(userAux.getLogradouro());
-		usuario.setComplemento(userAux.getComplemento());
-		usuario.setBairro(userAux.getBairro());
-		usuario.setLocalidade(userAux.getLocalidade());
-		usuario.setUf(userAux.getUf());
 		
 		/*Consumindo API pública externa - FIM*/
 		
@@ -160,7 +161,7 @@ public class IndexController {
 		for (Telefone telefone : usuario.getTelefones()) {
 			telefone.setUsuario(usuario);
 		}
-		Usuario userTemporario = usuarioRepository.findUserByLogin(usuario.getLogin());
+		Usuario userTemporario = usuarioRepository.findById(usuario.getId()).get();
 		
 		if (!userTemporario.getSenha().equals(usuario.getSenha())) {
 			String senhaCriptografada = new BCryptPasswordEncoder().encode(usuario.getSenha());
@@ -181,4 +182,14 @@ public class IndexController {
 		return new ResponseEntity("apagou!", HttpStatus.OK);
 	}
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@GetMapping(value = "/usuarioPorNome/{nome}", produces = "application/json")
+	@CacheEvict(value="cacheusuarios", allEntries = true) // nao permite que o chache fique muito tempo setado e tras novas atualizações ele tras
+	@CachePut("cacheusuarios") // identifica que tem novas atualizaç~eos e tras
+	public ResponseEntity pesquisarByNome(@PathVariable(value = "nome") String nome) {
+		
+		List usuarios = usuarioRepository.findUserByNome(nome);
+		
+		return new ResponseEntity<List<Usuario>>(usuarios, HttpStatus.OK);
+	}
 }
