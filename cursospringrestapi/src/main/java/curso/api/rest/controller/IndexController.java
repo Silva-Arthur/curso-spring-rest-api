@@ -31,7 +31,6 @@ import curso.api.rest.model.Usuario;
 import curso.api.rest.model.UsuarioDTO;
 import curso.api.rest.repository.UsuarioRepository;
 
-
 /*Mapeando como um controller REST*/
 @RestController
 /*mapeando minha classe com a URI*/

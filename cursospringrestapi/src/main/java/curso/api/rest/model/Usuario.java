@@ -21,6 +21,7 @@ import javax.persistence.UniqueConstraint;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+
 @Entity
 public class Usuario implements UserDetails{
 
@@ -36,7 +37,9 @@ public class Usuario implements UserDetails{
 	private String senha;
 	private String nome;
 	private String token;
+	
 	private String cpf;
+	
 	private String cep;
 	private String logradouro;
 	private String bairro;
