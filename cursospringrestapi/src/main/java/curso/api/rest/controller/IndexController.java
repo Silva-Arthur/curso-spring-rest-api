@@ -29,7 +29,9 @@ import com.google.gson.Gson;
 import curso.api.rest.model.Telefone;
 import curso.api.rest.model.Usuario;
 import curso.api.rest.model.UsuarioDTO;
+import curso.api.rest.repository.TelefoneRepository;
 import curso.api.rest.repository.UsuarioRepository;
+import curso.api.rest.service.ImplementacaoUserDatailsService;
 
 /*Mapeando como um controller REST*/
 @RestController
@@ -39,6 +41,12 @@ public class IndexController {
 	
 	@Autowired
 	private UsuarioRepository usuarioRepository;
+	
+	@Autowired
+	private TelefoneRepository telefoneRepository;
+	
+	@Autowired
+	private ImplementacaoUserDatailsService implementacaoUserDatailsService;
 	
 	/* 'value = /' quer dizer que estamos mapeando direto na raiz*/
 	@GetMapping(value = "/{id}/codigovenda/{venda}", produces = "application/json")
@@ -137,6 +145,8 @@ public class IndexController {
 		usuario.setSenha(senhaCriptografada);
 		Usuario usuarioSalvo = usuarioRepository.save(usuario);
 		
+		implementacaoUserDatailsService.insereAcessoPadrao(usuarioSalvo.getId());
+		
 		return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
 	}
 	
@@ -190,5 +200,13 @@ public class IndexController {
 		List usuarios = usuarioRepository.findUserByNome(nome);
 		
 		return new ResponseEntity<List<Usuario>>(usuarios, HttpStatus.OK);
+	}
+	
+	@DeleteMapping(value = "/removerTelefone/{id}", produces = "application/text")
+	public String deleteTelefone(@PathVariable("id") Long id) {
+		
+		telefoneRepository.deleteById(id);
+		
+		return "ok";
 	}
 }
