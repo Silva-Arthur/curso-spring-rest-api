@@ -21,6 +21,8 @@ import javax.persistence.UniqueConstraint;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 
 @Entity
 public class Usuario implements UserDetails{
@@ -162,6 +164,7 @@ public class Usuario implements UserDetails{
 	
 	/*São os acessos do usuario ROLE_ADMIN, ROLE_VISITANTE*/
 	@Override
+	@JsonIgnore
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return roles;
 	}
