@@ -5,12 +5,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -100,10 +102,14 @@ public class IndexController {
 	@GetMapping(value = "/", produces = "application/json")
 	@CacheEvict(value="cacheusuarios", allEntries = true) // nao permite que o chache fique muito tempo setado e tras novas atualizações ele tras
 	@CachePut("cacheusuarios") // identifica que tem novas atualizaç~eos e tras
-	public ResponseEntity<List<Usuario>> usuarios() throws InterruptedException{
-		List<Usuario> list = (List<Usuario>) usuarioRepository.findAll();
+	public ResponseEntity<Page<Usuario>> usuarios() throws InterruptedException{
 		
-		return new ResponseEntity<List<Usuario>>(list, HttpStatus.OK);
+		/*Primeira página trás 5 registros*/
+		PageRequest page = PageRequest.of(0, 5, Sort.by("nome"));
+		
+		Page<Usuario> lista = usuarioRepository.findAll(page);
+		
+		return new ResponseEntity<Page<Usuario>>(lista, HttpStatus.OK);
 	}
 	
 	/*Grava no banco de dados e retorna o objeto que foi salvo no banco*/
@@ -191,15 +197,25 @@ public class IndexController {
 		return new ResponseEntity("apagou!", HttpStatus.OK);
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({"rawtypes"})
 	@GetMapping(value = "/usuarioPorNome/{nome}", produces = "application/json")
 	@CacheEvict(value="cacheusuarios", allEntries = true) // nao permite que o chache fique muito tempo setado e tras novas atualizações ele tras
 	@CachePut("cacheusuarios") // identifica que tem novas atualizaç~eos e tras
 	public ResponseEntity pesquisarByNome(@PathVariable(value = "nome") String nome) {
 		
-		List usuarios = usuarioRepository.findUserByNome(nome);
+		PageRequest page = null;
+		Page<Usuario> usuarios = null; 
 		
-		return new ResponseEntity<List<Usuario>>(usuarios, HttpStatus.OK);
+		if (nome == null || (nome != null && nome.trim().isEmpty()) || nome.equalsIgnoreCase("undefined")) {
+			page = PageRequest.of(0, 5, Sort.by("nome"));
+			usuarios = usuarioRepository.findAll(page);
+		} else {
+			page = PageRequest.of(0, 5, Sort.by("nome"));
+			usuarios = usuarioRepository.findUserByNome(nome, page);
+		}
+		
+		
+		return new ResponseEntity<Page<Usuario>>(usuarios, HttpStatus.OK);
 	}
 	
 	@DeleteMapping(value = "/removerTelefone/{id}", produces = "application/text")
@@ -208,5 +224,41 @@ public class IndexController {
 		telefoneRepository.deleteById(id);
 		
 		return "ok";
+	}
+	
+	/*Vamos supor que o carregamento de usuário seja um processo lento e
+	 * queremos controlar ele com cache para agilizar o processo*/
+	@GetMapping(value = "/page/{pagina}", produces = "application/json")
+	@CacheEvict(value="cacheusuarios", allEntries = true) // nao permite que o chache fique muito tempo setado e tras novas atualizações ele tras
+	@CachePut("cacheusuarios") // identifica que tem novas atualizaç~eos e tras
+	public ResponseEntity<Page<Usuario>> usuariosPagina(@PathVariable(value = "pagina") int pagina) throws InterruptedException{
+		
+		/*Primeira página trás 5 registros*/
+		PageRequest page = PageRequest.of(pagina, 5, Sort.by("nome"));
+		
+		Page<Usuario> lista = usuarioRepository.findAll(page);
+		
+		return new ResponseEntity<Page<Usuario>>(lista, HttpStatus.OK);
+	}
+	
+	@SuppressWarnings({"rawtypes"})
+	@GetMapping(value = "/usuarioPorNome/{nome}/page/{page}", produces = "application/json")
+	@CacheEvict(value="cacheusuarios", allEntries = true) // nao permite que o chache fique muito tempo setado e tras novas atualizações ele tras
+	@CachePut("cacheusuarios") // identifica que tem novas atualizaç~eos e tras
+	public ResponseEntity pesquisarByNomePage(
+			@PathVariable(value = "nome") String nome,
+			@PathVariable(value = "page") int page) {
+		
+		PageRequest pageRequest = null;
+		Page<Usuario> usuarios = null; 
+		
+		if (nome == null || (nome != null && nome.trim().isEmpty()) || nome.equalsIgnoreCase("undefined")) {
+			pageRequest = PageRequest.of(page, 5, Sort.by("nome"));
+			usuarios = usuarioRepository.findAll(pageRequest);
+		} else {
+			pageRequest = PageRequest.of(page, 5, Sort.by("nome"));
+			usuarios = usuarioRepository.findUserByNome(nome, pageRequest);
+		}
+		return new ResponseEntity<Page<Usuario>>(usuarios, HttpStatus.OK);
 	}
 }
