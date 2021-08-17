@@ -2,6 +2,7 @@ package curso.api.rest.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -16,11 +17,15 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.OneToMany;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
@@ -65,6 +70,11 @@ public class Usuario implements UserDetails{
 	inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id", table = "role", unique = false, updatable = false),
 	foreignKey = @ForeignKey(name = "role_fk", value = ConstraintMode.CONSTRAINT))
 	private List<Role> roles; 
+	
+	@JsonFormat(pattern = "dd/MM/yyyy")
+	@Temporal(TemporalType.DATE)
+	@DateTimeFormat(iso = ISO.DATE, pattern = "dd/MM/yyyy")
+	private Date dataNascimento;
 	
 	public String getCep() {
 		return cep;
@@ -165,7 +175,7 @@ public class Usuario implements UserDetails{
 	/*São os acessos do usuario ROLE_ADMIN, ROLE_VISITANTE*/
 	@Override
 	@JsonIgnore
-	public Collection<? extends GrantedAuthority> getAuthorities() {
+	public Collection<Role> getAuthorities() {
 		return roles;
 	}
 	@Override
@@ -209,6 +219,12 @@ public class Usuario implements UserDetails{
 	}
 	public void setComplemento(String complemento) {
 		this.complemento = complemento;
+	}
+	public Date getDataNascimento() {
+		return dataNascimento;
+	}
+	public void setDataNascimento(Date dataNascimento) {
+		this.dataNascimento = dataNascimento;
 	}
 	
 }
