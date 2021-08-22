@@ -58,5 +58,9 @@ public class CursospringrestapiApplication implements WebMvcConfigurer {
 		registry.addMapping("/usuario/**")// libera tudo do usuario, 
 		.allowedMethods("*")//se no allowedMethods eu por só * 
 		.allowedOrigins("*");//funcionará para todos que acessar do localhosts
+		
+		registry.addMapping("/profissao/**")// libera tudo do usuario, 
+		.allowedMethods("*")//se no allowedMethods eu por só * 
+		.allowedOrigins("*");//funcionará para todos que acessar do localhosts
 	}
 }
