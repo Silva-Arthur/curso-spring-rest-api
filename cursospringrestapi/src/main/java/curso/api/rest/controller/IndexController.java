@@ -5,8 +5,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -28,12 +33,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
 
+import curso.api.rest.consts.ConstRelatorio;
 import curso.api.rest.model.Telefone;
+import curso.api.rest.model.UserReport;
 import curso.api.rest.model.Usuario;
 import curso.api.rest.model.UsuarioDTO;
 import curso.api.rest.repository.TelefoneRepository;
 import curso.api.rest.repository.UsuarioRepository;
 import curso.api.rest.service.ImplementacaoUserDatailsService;
+import curso.api.rest.service.ServiceRelatorio;
 
 /*Mapeando como um controller REST*/
 @RestController
@@ -49,6 +57,9 @@ public class IndexController {
 	
 	@Autowired
 	private ImplementacaoUserDatailsService implementacaoUserDatailsService;
+	
+	@Autowired
+	private ServiceRelatorio serviceRelatorio;
 	
 	/* 'value = /' quer dizer que estamos mapeando direto na raiz*/
 	@GetMapping(value = "/{id}/codigovenda/{venda}", produces = "application/json")
@@ -260,5 +271,29 @@ public class IndexController {
 			usuarios = usuarioRepository.findUserByNome(nome, pageRequest);
 		}
 		return new ResponseEntity<Page<Usuario>>(usuarios, HttpStatus.OK);
+	}
+	
+	@GetMapping(value = "/relatorio", produces = "application/text")
+	public ResponseEntity<String> downloadRelatorio(HttpServletRequest request) throws Exception {
+		byte[] pdf = serviceRelatorio.gerarRelatorio("relatorio-usuario", new HashMap<>(), request.getServletContext());
+		
+		String base64Pdf = ConstRelatorio.RELATORIO_PDF_BASE64 + Base64.encodeBase64String(pdf);
+		
+		return new ResponseEntity<String>(base64Pdf, HttpStatus.OK);
+	}
+	
+	@PostMapping(value = "/relatorio/", produces = "application/text")
+	public ResponseEntity<String> downloadRelatorioParametro(@RequestBody UserReport userReport,  HttpServletRequest request) throws Exception {
+		
+		Map<String, Object> parametros = new HashMap<String, Object>();
+		
+		parametros.put("DATA_INICIO", userReport.getDataInicio());
+		parametros.put("DATA_FIM", userReport.getDataFim());
+		
+		byte[] pdf = serviceRelatorio.gerarRelatorio("relatorio-usuario-parametros", parametros, request.getServletContext());
+		
+		String base64Pdf = ConstRelatorio.RELATORIO_PDF_BASE64 + Base64.encodeBase64String(pdf);
+		
+		return new ResponseEntity<String>(base64Pdf, HttpStatus.OK);
 	}
 }
