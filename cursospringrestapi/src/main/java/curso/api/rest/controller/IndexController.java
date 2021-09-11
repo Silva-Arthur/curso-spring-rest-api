@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -20,6 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,6 +37,7 @@ import com.google.gson.Gson;
 
 import curso.api.rest.consts.ConstRelatorio;
 import curso.api.rest.model.Telefone;
+import curso.api.rest.model.UserChart;
 import curso.api.rest.model.UserReport;
 import curso.api.rest.model.Usuario;
 import curso.api.rest.model.UsuarioDTO;
@@ -60,6 +63,9 @@ public class IndexController {
 	
 	@Autowired
 	private ServiceRelatorio serviceRelatorio;
+	
+	@Autowired 
+	private JdbcTemplate jdbcTemplate;
 	
 	/* 'value = /' quer dizer que estamos mapeando direto na raiz*/
 	@GetMapping(value = "/{id}/codigovenda/{venda}", produces = "application/json")
@@ -296,4 +302,32 @@ public class IndexController {
 		
 		return new ResponseEntity<String>(base64Pdf, HttpStatus.OK);
 	}
+	
+	@GetMapping(value = "/grafico", produces = "application/json")
+	public ResponseEntity<UserChart> grafico () {
+		UserChart userChart = new UserChart();
+		
+		/**
+	   * select array_agg(''''||nome||'''') from usuario where salario > 0
+		union all
+		
+	   **/
+		
+		String sql = "select array_agg(nome) from usuario where salario > 0";
+		sql += " union all";
+		sql += " select array_agg(salario)::character varying[] from usuario where salario > 0;";
+		  
+		List<String> resultado = jdbcTemplate.queryForList(sql, String.class);
+		
+		if (!resultado.isEmpty()) {
+			String nomes = resultado.get(0).replaceAll("\\{", "").replaceAll("\\}", "").replaceAll("\"", "");
+			String salarios = resultado.get(1).replaceAll("\\{", "").replaceAll("\\}", "");
+			
+			userChart.setNome(nomes);
+			userChart.setSalario(salarios);
+		}
+
+		return new ResponseEntity<UserChart>(userChart, HttpStatus.OK);
+	}
+	
 }
